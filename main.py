@@ -252,13 +252,16 @@ class Model(nn.Module):
     def __init__(self):
         super(Model,self).__init__()
         self.model_backbone = net_backbone
-
     def forward(self, CC,MLO):
         CC_predict, CC_feature = self.model_backbone(CC)
         MLO_predict, MLO_feature = self.model_backbone(MLO)
-        correlation = corr(CC_feature,MLO_feature)
+        corr_total = 0
+        for i in range(CC_feature.size(3)):
+             corr_total += corr(CC_feature[:,:,:,i], MLO_feature[:,:,:,i])
+        
+        correlation = corr_total
+        
         return CC_predict,MLO_predict,correlation
-
 
 net = Model()
 
@@ -307,7 +310,7 @@ def train(epoch):
         inputsMLO, targetsMLO = inputsMLO.to(device), targetsMLO.to(device)
 
         optimizer.zero_grad()
-        outputsCC,outputsMLO,correlation = net(inputsCC,inputsMLO)#
+        outputsCC,outputsMLO,correlation = net(inputsCC,inputsMLO)
         
         lossCC = criterion2(outputsCC, targetsCC.long())
         lossMLO = criterion2(outputsMLO, targetsMLO.long())
@@ -379,11 +382,9 @@ def test(epoch):
         #print("test",outputs)
         lossCC = criterion1(outputsCC, targetsCC.long())
         lossMLO = criterion1(outputsMLO, targetsMLO.long())
-        #losscorr = correlation
-        losstotal = lossCC + lossMLO #-  losscorr
+        losstotal = lossCC + lossMLO 
         test_lossCC += lossCC.item()
         test_lossMLO += lossMLO.item()
-        #test_losscorr += losscorr.item()
         test_losstotal += losstotal.item()
         _, predictedCC = outputsCC.max(1)
         _, predictedMLO = outputsMLO.max(1)
