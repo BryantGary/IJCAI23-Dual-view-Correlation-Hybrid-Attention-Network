@@ -185,7 +185,7 @@ class CNN(nn.Module):
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
-        self.net1= NONLocalBlock1D(in_channels=2048)
+        self.nonlocal= NONLocalBlock1D(in_channels=2048)
         self.avgpool1 = nn.AdaptiveAvgPool2d((1, 1))
         self.fcclass= nn.Linear(2048, num_classes)
         for m in self.modules():
@@ -229,7 +229,7 @@ class CNN(nn.Module):
         x = self.layer4(x)
         '''Non local Insert'''        
         for i in range(x.size(3)):
-         x[:,:,:,i] = self.net1(x[:,:,:,i])
+         x[:,:,:,i] = self.nonlocal(x[:,:,:,i])
 
         #Feature for correlation
         x_feature = x  
