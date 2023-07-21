@@ -3,7 +3,7 @@ import torch.nn as nn
 from torchvision import models
 import math
 import torch.utils.model_zoo as model_zoo
-#from layer import LocalRelationalLayer
+from layer import LocalRelationalLayer
 from non_local_dot_product import NONLocalBlock1D
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152', 'resnext50_32x4d', 'resnext101_32x8d',
@@ -180,14 +180,16 @@ class CNN(nn.Module):
                                bias=False)                   
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU(inplace=False)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, 64, layers[0])
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
-        self.nonlocal= NONLocalBlock1D(in_channels=2048)
+        #LR layer
+        self.local = LocalRelationalLayer(width, width, 3, stride=1, m=16, padding=1) 
+        #Non-local layer               
+        self.net1= NONLocalBlock1D(in_channels=1024)
         self.avgpool1 = nn.AdaptiveAvgPool2d((1, 1))
-        self.fcclass= nn.Linear(2048, num_classes)
+        self.fcclass= nn.Linear(1024, num_classes)
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
@@ -209,11 +211,7 @@ class CNN(nn.Module):
         layers.append(block(self.inplanes, planes, stride, downsample))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
-        #Position for injecting LR layer           
-          if (planes==512 and i==2):
-             layers.append(block(self.inplanes, planes,groups=2))
-          else:
-             layers.append(block(self.inplanes, planes))
+            layers.append(block(self.inplanes, planes))
         
         return nn.Sequential(*layers)
  
@@ -221,20 +219,21 @@ class CNN(nn.Module):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        x = self.maxpool(x)
  
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)   
-        x = self.layer4(x)
+        #x = self.layer4(x)
+        '''Local Insert'''     
+        x =  self.local(x) 
         '''Non local Insert'''        
         for i in range(x.size(3)):
-         x[:,:,:,i] = self.nonlocal(x[:,:,:,i])
+         x[:,:,:,i] = self.net1(x[:,:,:,i])
 
         #Feature for correlation
         x_feature = x  
         x = self.avgpool1(x)
-        x = x.view(x.size(0), 2048)
+        x = x.view(x.size(0), 1024)
         x = self.fcclass(x)
  
         return x,x_feature

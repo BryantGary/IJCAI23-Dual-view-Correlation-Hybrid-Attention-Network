@@ -20,7 +20,6 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pretrain_CNN
-from layer import LocalRelationalLayer
 import data_preprocess
 from non_local_dot_product import NONLocalBlock1D
 from correlation import corr
@@ -110,8 +109,6 @@ class Bottleneck(nn.Module):
         self.planes= planes
         self.inplanes= inplanes
         self.stride = stride
-        #LR layer
-        self.local = LocalRelationalLayer(width, width, 3, stride=1, m=16, padding=1)
         self.bn2 = norm_layer(width)
         self.conv3 = conv1x1(width, planes * self.expansion)
         self.bn3 = norm_layer(planes * self.expansion)
@@ -123,14 +120,10 @@ class Bottleneck(nn.Module):
         identity = x
     
         out = self.conv1(x)
-        if(self.planes!=512 or self.groups!=2):
-            out = self.bn1(out)
+        out = self.bn1(out)
         out = self.relu(out)
-         
-        if(self.planes ==512  and self.groups==2):
-          out =  self.local(out) 
-        else:
-            out = self.conv2(out)
+
+        out = self.conv2(out)
         out = self.bn2(out)
         out = self.relu(out)
 
@@ -167,7 +160,7 @@ class MyDataset(Dataset):
         return len(self.imagesCC)
 
 # input image dimensions
-img_rows, img_cols = 227, 227
+img_rows, img_cols = 256, 256
 img_channels = 1
 # the data, shuffled and split between train and test sets
 trXMLO, y_trainMLO, teXMLO, y_testMLO, trXCC, y_trainCC, teXCC, y_testCC = data_preprocess.loaddata()
@@ -195,31 +188,31 @@ print(X_trainMLO.shape[0], 'train samples')
 print(X_testMLO.shape[0], 'test samples')
 
 '''1ch->3ch'''
-X_train_extendMLO = np.zeros((X_trainMLO.shape[0],3, 227, 227))
+X_train_extendMLO = np.zeros((X_trainMLO.shape[0],3, 256, 256))
 for i in range(X_trainMLO.shape[0]):
-    rexMLO = np.resize(X_trainMLO[i,:,:,:], (227, 227))
+    rexMLO = np.resize(X_trainMLO[i,:,:,:], (256, 256))
     X_train_extendMLO[i,0,:,:] = rexMLO
     X_train_extendMLO[i,1,:,:] = rexMLO
     X_train_extendMLO[i,2,:,:] = rexMLO
 X_trainMLO = X_train_extendMLO
-X_test_extendMLO = np.zeros((X_testMLO.shape[0], 3 ,227, 227))
+X_test_extendMLO = np.zeros((X_testMLO.shape[0], 3 ,256, 256))
 for i in range(X_testMLO.shape[0]):
-    rexMLO = np.resize(X_testMLO[i,:,:,:], (227, 227))
+    rexMLO = np.resize(X_testMLO[i,:,:,:], (256, 256))
     X_test_extendMLO[i,0,:,:] = rexMLO
     X_test_extendMLO[i,1,:,:] = rexMLO
     X_test_extendMLO[i,2,:,:] = rexMLO
 X_testMLO = X_test_extendMLO
 
-X_train_extendCC = np.zeros((X_trainCC.shape[0],3, 227, 227))
+X_train_extendCC = np.zeros((X_trainCC.shape[0],3, 256, 256))
 for i in range(X_trainCC.shape[0]):
-    rexCC = np.resize(X_trainCC[i,:,:,:], (227, 227))
+    rexCC = np.resize(X_trainCC[i,:,:,:], (256, 256))
     X_train_extendCC[i,0,:,:] = rexCC
     X_train_extendCC[i,1,:,:] = rexCC
     X_train_extendCC[i,2,:,:] = rexCC
 X_trainCC = X_train_extendCC
-X_test_extendCC = np.zeros((X_testCC.shape[0], 3,227, 227))
+X_test_extendCC = np.zeros((X_testCC.shape[0], 3,256, 256))
 for i in range(X_testCC.shape[0]):
-    rexCC = np.resize(X_testCC[i,:,:,:], (227, 227))
+    rexCC = np.resize(X_testCC[i,:,:,:], (256, 256))
     X_test_extendCC[i,0,:,:] = rexCC
     X_test_extendCC[i,1,:,:] = rexCC
     X_test_extendCC[i,2,:,:] = rexCC

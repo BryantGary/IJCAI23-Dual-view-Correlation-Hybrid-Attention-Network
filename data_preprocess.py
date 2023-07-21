@@ -233,10 +233,10 @@ def loaddata():
 			  print(i)                  
 
 		'''Pickle to numpy''' 
-		traindataMLO, trainlabelMLO = np.zeros((len(contentstrainMLO),227,227)), np.zeros((len(contentstrainMLO),))
-		testdataMLO, testlabelMLO =  np.zeros((len(contentstestMLO),227,227)), np.zeros((len(contentstestMLO),))
-		traindataCC, trainlabelCC = np.zeros((len(contentstrainCC),227,227)), np.zeros((len(contentstrainCC),))
-		testdataCC, testlabelCC =  np.zeros((len(contentstestCC),227,227)), np.zeros((len(contentstestCC),))
+		traindataMLO, trainlabelMLO = np.zeros((len(contentstrainMLO),256,256)), np.zeros((len(contentstrainMLO),))
+		testdataMLO, testlabelMLO =  np.zeros((len(contentstestMLO),256,256)), np.zeros((len(contentstestMLO),))
+		traindataCC, trainlabelCC = np.zeros((len(contentstrainCC),256,256)), np.zeros((len(contentstrainCC),))
+		testdataCC, testlabelCC =  np.zeros((len(contentstestCC),256,256)), np.zeros((len(contentstestCC),))
 
 		traincountMLO = 0
 		print("train_numMLO:",len(contentstrainMLO))
